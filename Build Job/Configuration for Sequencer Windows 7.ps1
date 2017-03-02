@@ -1,4 +1,4 @@
-﻿# Shared Sequencer Configuration Windows 7 ########################################################
+﻿# Shared Sequencer Configuration Windows 7 Build ##################################################
 #Setting Wallpaper for Administrator.
 Write-Output 'Setting Wallpaper for Sequencer.'
 VMR_RunModule -Module Framework\Module_DesktopExperience-SetWallPaper.ps1 -Arguments "-Wallpaper 'Sequencer.jpg' -PicturePosition 'Center' -DesktopColour '229 115 0'"
@@ -10,4 +10,21 @@ VMR_RunModule -Module Framework\Module_Windows-Services-GlobalConfigure.ps1 -Arg
 #Disable Action Centre Notifications.
 Write-Output 'Disable Action Centre Notifications.'
 VMR_RunModule -Module Framework\Module_Windows-HelpTips-GlobalDisable.ps1
-#<<< End of Shared Sequencer Configuration Windows 7 >>>
+#<<< End of Shared Sequencer Configuration Windows 7 Build >>>
+
+
+
+<#
+Virtual Machine Runner  -  Copyright (C) 2016-2017  -  Riley Lim
+
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU
+General Public License as published by the Free Software Foundation, either version 3 of the 
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with this program.  If not, 
+see <http://www.gnu.org/licenses/>.
+#>

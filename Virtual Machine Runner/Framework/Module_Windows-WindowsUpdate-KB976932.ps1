@@ -1,4 +1,14 @@
-﻿# Script Support ##################################################################################
+﻿<#
+.SYNOPSIS
+    Installs KB976932, Service Pack 1 for Windows 7 and Windows Server 2008 R2.
+ 
+.LINK
+Author:.......http://www.linkedin.com/in/rileylim
+#>
+
+
+
+# Script Support ##################################################################################
 # Operating System, 32-bit Support, 64-bit Support
 # Windows 10,No,No
 # Windows 8.1,No,No
@@ -8,6 +18,11 @@
 # Server 2012,No,No
 # Server 2008 R2,NA,Yes
 #<<< End of Script Support >>>
+
+# Script Assets ###################################################################################
+# Asset: windows6.1-KB976932-X64.exe
+# Asset: windows6.1-KB976932-x86.exe
+#<<< End of Script Assets >>>
 
 
 
@@ -24,21 +39,49 @@ VMR_ReadyMessagingEnvironment
 
 
 # Start of script work ############################################################################
+$ArrayScriptExitResult = @()
+
 If (([Environment]::GetEnvironmentVariable("VMRWindowsArchitecture","Machine")) -eq '32-bit')
         {$ServicePackForThisArchitecture = "$VMRCollateral\windows6.1-KB976932-x86.exe"}
    Else {$ServicePackForThisArchitecture = "$VMRCollateral\windows6.1-KB976932-X64.exe"}
                           
-Write-Host $ServicePackForThisArchitecture
-$Process = Start-Process -FilePath $ServicePackForThisArchitecture -ArgumentList '/quiet /nodialog /noreboot' -Wait -PassThru
+$ArrayScriptExitResult += ((Start-Process -FilePath $ServicePackForThisArchitecture -ArgumentList '/quiet /nodialog /noreboot' -Wait -PassThru).ExitCode | Out-String) -replace "`n|`r"
 
-$ScriptExitResult = $Process.ExitCode | Out-String
-($ScriptExitResult = $ScriptExitResult -replace "`n|`r") >> $VMRScriptLog
+$SuccessCodes = @('Example','0','3010','True','985603','3017')                                    #List all success codes, including reboots here.
+$SuccessButNeedsRebootCodes = @('Example','3010','3017')                                          #List success but needs reboot code here.
+$ScriptError = $ArrayScriptExitResult | Where-Object {$SuccessCodes -notcontains $_}              #Store errors found in this variable
+$ScriptReboot = $ArrayScriptExitResult | Where-Object {$SuccessButNeedsRebootCodes -contains $_}  #Store success but needs reboot in this variable
+
+If ($ScriptError -eq $null)                       #If ScriptError is empty, then everything processed ok.
+        {If ($ScriptReboot -ne $null)             #If ScriptReboot is not empty, then everything processed ok, but just needs a reboot.
+                {$ScriptExitResult = 'Reboot'}
+            Else{$ScriptExitResult = '0'}}
+    Else{$ScriptExitResult = 'Error'
+         $ScriptError >> $VMRScriptLog}
+
+$ScriptExitResult >> $VMRScriptLog
 
 Switch ($ScriptExitResult) 
-    {'0'        {VMR_ProcessingModuleComplete -ModuleExitStatus 'Complete'}      #Completed ok.
-     '985603'   {VMR_ProcessingModuleComplete -ModuleExitStatus 'Complete'}      #SP1 already installed.
-     '3010'     {VMR_ProcessingModuleComplete -ModuleExitStatus 'RebootPending'} #SP1 installed pending reboot.
-     '3017'     {VMR_ProcessingModuleComplete -ModuleExitStatus 'RebootPending'} #Reboot preventing SP1 install.
+    {'0'        {VMR_ProcessingModuleComplete -ModuleExitStatus 'Complete'}
+     'Reboot'   {VMR_ProcessingModuleComplete -ModuleExitStatus 'RebootPending'}
+     'Error'    {VMR_ProcessingModuleComplete -ModuleExitStatus 'Error'}
      Default    {VMR_ProcessingModuleComplete -ModuleExitStatus 'Null'
                  Write-Host "The script module was unable to trap exit code for $VMRScriptFile."}}
 #<<< End of script work >>>
+
+
+
+<#
+Virtual Machine Runner  -  Copyright (C) 2016-2017  -  Riley Lim
+
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU
+General Public License as published by the Free Software Foundation, either version 3 of the 
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with this program.  If not, 
+see <http://www.gnu.org/licenses/>.
+#>

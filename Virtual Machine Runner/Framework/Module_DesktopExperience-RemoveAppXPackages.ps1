@@ -20,6 +20,10 @@ Author:.......http://www.linkedin.com/in/rileylim
 # Server 2008 R2,NA,Unproven
 #<<< End of Script Support >>>
 
+# Script Assets ###################################################################################
+# Asset: DefaultMordernApps.csv
+#<<< End of Script Assets >>>
+
 
 
 # Setting up housekeeping #########################################################################
@@ -59,3 +63,20 @@ Switch ($ScriptExitResult)
      Default    {VMR_ProcessingModuleComplete -ModuleExitStatus 'Null'
                  Write-Host "The script module was unable to trap exit code for $VMRScriptFile."}}
 #<<< End of script work >>>
+
+
+
+<#
+Virtual Machine Runner  -  Copyright (C) 2016-2017  -  Riley Lim
+
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU
+General Public License as published by the Free Software Foundation, either version 3 of the 
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with this program.  If not, 
+see <http://www.gnu.org/licenses/>.
+#>

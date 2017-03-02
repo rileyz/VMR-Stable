@@ -1,4 +1,4 @@
-﻿# Start Windows Installer Repackager Build ########################################################
+﻿# Shared Sequencer Configuration Windows 10 Build #################################################
 #Setting Wallpaper for Administrator.
 Write-Output 'Setting Wallpaper for Administrator.'
 VMR_RunModule -Module Framework\Module_DesktopExperience-SetWallPaper.ps1 -Arguments "-Wallpaper 'Sequencer.jpg' -PicturePosition 'Center' -DesktopColour '229 115 0'"
@@ -14,4 +14,21 @@ VMR_RunModule -Module Framework\Module_Windows-WindowsDefender-GlobalDisable.ps1
 #Hide Windows 10 Search Box.
 Write-Output 'Hide Windows 10 Search Box.'
 VMR_RunModule -Module Framework\Module_DesktopExperience-ConfigureSearchBox.ps1
-#<<< End of Windows Installer Repackager Build >>>
+#<<< End of Shared Sequencer Configuration Windows 10 Build >>>
+
+
+
+<#
+Virtual Machine Runner  -  Copyright (C) 2016-2017  -  Riley Lim
+
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU
+General Public License as published by the Free Software Foundation, either version 3 of the 
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with this program.  If not, 
+see <http://www.gnu.org/licenses/>.
+#>

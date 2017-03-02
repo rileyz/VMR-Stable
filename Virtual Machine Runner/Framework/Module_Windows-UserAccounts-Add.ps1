@@ -1,4 +1,14 @@
-﻿# Script Support ##################################################################################
+﻿<#
+.SYNOPSIS
+    Add Windows user accounts.
+ 
+.LINK
+Author:.......http://www.linkedin.com/in/rileylim
+#>
+
+
+
+# Script Support ##################################################################################
 # Operating System, 32-bit Support, 64-bit Support
 # Windows 10,Yes,Yes
 # Windows 8.1,Yes,Yes
@@ -9,6 +19,10 @@
 # Server 2012,NA,Yes
 # Server 2008 R2,NA,Yes
 #<<< End of Script Support >>>
+
+# Script Assets ###################################################################################
+# Asset: UserAccountsAdd.csv
+#<<< End of Script Assets >>>
 
 
 
@@ -25,6 +39,8 @@ VMR_ReadyMessagingEnvironment
 
 
 # Start of script work ############################################################################
+$ArrayScriptExitResult = @()
+
 $DataCVS = "$VMRCollateral\UserAccountsAdd.csv" 
 $UserAccountsArray = (Import-Csv $DataCVS -Header UserNames)[1..($DataCVS.length - 1)]
 
@@ -33,28 +49,51 @@ ForEach ($_ in $UserAccountsArray)
 
          "Adding user `'$CSVUser`'" >> $VMRScriptLog                       
          &net User "$CSVUser" /Add PASSWORDCHG:NO
-         $Results += $LASTEXITCODE
-         $LASTEXITCODE >> $VMRScriptLog #if last exit code = 2 then account exits         
+         $ArrayScriptExitResult += $LASTEXITCODE
          
-         'Setting the password to never expire.' >> $VMRScriptLog
+         #Password never expire.
          &WMIC USERACCOUNT WHERE "Name=`"$CSVUser`"" SET PasswordExpires=FALSE
-         $Results += $LASTEXITCODE
+         $ArrayScriptExitResult += $LASTEXITCODE
 
-         'Setting the password to blank/no password required.' >> $VMRScriptLog
+         #Setting the password to blank/no password required.
          Start-Process -FilePath cmd.exe -ArgumentList "/C net User $CSVUser `"`"" -Wait
-         $Results += $LASTEXITCODE
+         $ArrayScriptExitResult += $LASTEXITCODE}
 
-         $LASTEXITCODE >> $VMRScriptLog}
+$SuccessCodes = @('Example','0','3010','True','2')                                                #List all success codes, including reboots here.
+$SuccessButNeedsRebootCodes = @('Example','3010')                                                 #List success but needs reboot code here.
+$ScriptError = $ArrayScriptExitResult | Where-Object {$SuccessCodes -notcontains $_}              #Store errors found in this variable
+$ScriptReboot = $ArrayScriptExitResult | Where-Object {$SuccessButNeedsRebootCodes -contains $_}  #Store success but needs reboot in this variable
 
-If ($Results -ne 0)
-        {$ScriptExitResult = 'Error'}
-    Else{$ScriptExitResult = '0'}
+If ($ScriptError -eq $null)                       #If ScriptError is empty, then everything processed ok.
+        {If ($ScriptReboot -ne $null)             #If ScriptReboot is not empty, then everything processed ok, but just needs a reboot.
+                {$ScriptExitResult = 'Reboot'}
+            Else{$ScriptExitResult = '0'}}
+    Else{$ScriptExitResult = 'Error'
+         $ScriptError >> $VMRScriptLog}
 
 $ScriptExitResult >> $VMRScriptLog
 
 Switch ($ScriptExitResult) 
-    {'0'        {VMR_ProcessingModuleComplete -ModuleExitStatus 'Complete'}      #Completed ok.
-     'Error'    {VMR_ProcessingModuleComplete -ModuleExitStatus 'Error'}         #Error in setting up user accounts.
+    {'0'        {VMR_ProcessingModuleComplete -ModuleExitStatus 'Complete'}
+     'Reboot'   {VMR_ProcessingModuleComplete -ModuleExitStatus 'RebootPending'}
+     'Error'    {VMR_ProcessingModuleComplete -ModuleExitStatus 'Error'}
      Default    {VMR_ProcessingModuleComplete -ModuleExitStatus 'Null'
                  Write-Host "The script module was unable to trap exit code for $VMRScriptFile."}}
 #<<< End of script work >>>
+
+
+
+<#
+Virtual Machine Runner  -  Copyright (C) 2016-2017  -  Riley Lim
+
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU
+General Public License as published by the Free Software Foundation, either version 3 of the 
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with this program.  If not, 
+see <http://www.gnu.org/licenses/>.
+#>

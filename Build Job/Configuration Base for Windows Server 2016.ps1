@@ -1,9 +1,9 @@
 ﻿# Start Windows Server 2016 Build #####################################################################
-Write-Output 'Adjusting Power Plan to High Preformace.'
-VMR_RunModule -Module Framework\Module_Windows-PowerModeHighPreformace-GlobalEnable.ps1
+Write-Output 'Adjusting Power Plan to High Performance.'
+VMR_RunModule -Module Framework\Module_Windows-PowerModeHighPerformance-GlobalEnable.ps1
 
-#Write-Output 'Installing Windows Server 2016 updates via WSUSOffline.'
-#VMR_RunModule -RerunUntilComplete -WaitForWindowsUpdateWorkerProcess -Module Framework\Module_Windows-WindowsUpdate-WSUSOffline.ps1
+Write-Output 'Installing Windows Server 2016 updates via WSUSOffline.'
+VMR_RunModule -RerunUntilComplete -WaitForWindowsUpdateWorkerProcess -Module Framework\Module_Windows-WindowsUpdate-WSUSOffline.ps1
 
 Write-Output 'Configure Windows Task Schedules: BaseConfiguration_WindowsServer2016.csv.'
 VMR_RunModule -Module Framework\Module_Windows-TaskScheduler-GlobalConfigure.ps1 -Arguments '-TaskSchedulesCSV BaseConfiguration_WindowsServer2012.csv'
@@ -20,14 +20,20 @@ VMR_RunModule -Module Framework\Module_Windows-ComputerAccountPasswordChange-Glo
 Write-Output 'Enable Remote Desktop Connection.'
 VMR_RunModule -Module Framework\Module_DesktopExperience-EnableRemoteDesktopConnection.ps1
 
-Write-Output 'Disable Windows Server 2012 Lock Screen.'
+Write-Output 'Disable Windows Server 2016 Lock Screen.'
 VMR_RunModule -Module Framework\Module_Windows-LockScreen-GlobalDisable.ps1
 
 Write-Output 'Creating Test User Accounts.'
 VMR_RunModule -Module Framework\Module_Windows-UserAccounts-Add.ps1
 
+Write-Output 'Configure to connect simulated mapped network drives on logon.'
+VMR_RunModule -Module Framework\Module_Windows-UserAccounts-NetworkDrives.ps1 -Arguments "-HomeDrives `'$MimicHomeDrives`' -CommonDrives `'$MimicCommonDrives`'"
+
 Write-Output 'Enabling auto logon.'
 VMR_RunModule -Module Framework\Module_Windows-UserAccounts-AutoLogon.ps1 -Arguments '-AutoLogonUserName Cached'
+
+Write-Output 'Waiting 5 minutes to allow profile first time tasks to complete.'
+Start-Sleep -Seconds 300
 
 Write-Output 'Enabling auto logon.'
 VMR_RunModule -Module Framework\Module_Windows-UserAccounts-AutoLogon.ps1 -Arguments "-AutoLogonUserName $GuestUserName -AutoLogonPassword $GuestPassword"
@@ -59,9 +65,26 @@ VMR_RunModule -Module Custom\Module_Custom-PackagingTools.ps1
 Write-Output 'Creating Binaries folder and shortcut.'
 VMR_RunModule -Module Custom\Module_Custom-CreateMyBinariesFolder.ps1
 
-Write-Output 'Installing Office Professional Plus 2013.'
-VMR_RunModule -Module Framework\Module_Software-OfficeProfessionalPlus2013.ps1 -Arguments '-Offce32bit'
+Write-Output 'Installing Office Professional Plus.'
+VMR_RunModule -Module Framework\Module_Software-OfficeProfessionalPlus.ps1 -Arguments "-Version $OfficeVersion"
 
 Write-Output 'Installing Windows 2016 and Office updates via WSUSOffline.'
 VMR_RunModule -RerunUntilComplete -Module Framework\Module_Windows-WindowsUpdate-WSUSOffline.ps1
 #<<< End of Windows Server 2016 Build >>>
+
+
+
+<#
+Virtual Machine Runner  -  Copyright (C) 2016-2017  -  Riley Lim
+
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU
+General Public License as published by the Free Software Foundation, either version 3 of the 
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with this program.  If not, 
+see <http://www.gnu.org/licenses/>.
+#>

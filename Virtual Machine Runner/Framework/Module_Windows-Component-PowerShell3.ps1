@@ -1,4 +1,14 @@
-﻿# Script Support ##################################################################################
+﻿<#
+.SYNOPSIS
+    Installs PowerShell 3.
+ 
+.LINK
+Author:.......http://www.linkedin.com/in/rileylim
+#>
+
+
+
+# Script Support ##################################################################################
 # Operating System, 32-bit Support, 64-bit Support
 # Windows 10,No,No
 # Windows 8.1,No,No
@@ -9,6 +19,11 @@
 # Server 2012,NA,No
 # Server 2008 R2,NA,Yes
 #<<< End of Script Support >>>
+
+# Script Assets ###################################################################################
+# Asset: Windows6.1-KB2506143-x64.msu
+# Asset: Windows6.1-KB2506143-x86.msu
+#<<< End of Script Assets >>>
 
 
 
@@ -25,20 +40,49 @@ VMR_ReadyMessagingEnvironment
 
 
 # Start of script work ############################################################################
-#Need to add detection for SP1
+$ArrayScriptExitResult = @()
+
 If (([Environment]::GetEnvironmentVariable("VMRWindowsArchitecture","Machine")) -eq '32-bit')
         {$PowerShell3ForThisArchitecture = "$VMRCollateral\Windows6.1-KB2506143-x86.msu"}
-   Else {$PowerShell3ForThisArchitecture = "$VMRCollateral\Windows6.1-KB2506143-x64.msu"}
-                          
-Write-Host $PowerShell3ForThisArchitecture
-$Process = Start-Process -FilePath $PowerShell3ForThisArchitecture -ArgumentList '/quiet /norestart' -Wait -PassThru
+   Else {$PowerShell3ForThisArchitecture = "$VMRCollateral\Windows6.1-KB2506143-x64.msu"}              
 
-($ScriptExitResult = $Process.ExitCode) >> $VMRScriptLog
+$ArrayScriptExitResult += (Start-Process -FilePath $PowerShell3ForThisArchitecture -ArgumentList '/quiet /norestart' -Wait -PassThru).ExitCode
+
+$SuccessCodes = @('Example','0','3010','True','2359302')                                          #List all success codes, including reboots here.
+$SuccessButNeedsRebootCodes = @('Example','3010')                                                 #List success but needs reboot code here.
+$ScriptError = $ArrayScriptExitResult | Where-Object {$SuccessCodes -notcontains $_}              #Store errors found in this variable
+$ScriptReboot = $ArrayScriptExitResult | Where-Object {$SuccessButNeedsRebootCodes -contains $_}  #Store success but needs reboot in this variable
+
+If ($ScriptError -eq $null)                       #If ScriptError is empty, then everything processed ok.
+        {If ($ScriptReboot -ne $null)             #If ScriptReboot is not empty, then everything processed ok, but just needs a reboot.
+                {$ScriptExitResult = 'Reboot'}
+            Else{$ScriptExitResult = '0'}}
+    Else{$ScriptExitResult = 'Error'
+         $ScriptError >> $VMRScriptLog}
+
+$ScriptExitResult >> $VMRScriptLog
 
 Switch ($ScriptExitResult) 
-    {'2359302'  {VMR_ProcessingModuleComplete -ModuleExitStatus 'Complete'}      #Completed ok.
-     '3010'     {VMR_ProcessingModuleComplete -ModuleExitStatus 'RebootPending'}
+    {'0'        {VMR_ProcessingModuleComplete -ModuleExitStatus 'Complete'}
+     'Reboot'   {VMR_ProcessingModuleComplete -ModuleExitStatus 'RebootPending'}
      'Error'    {VMR_ProcessingModuleComplete -ModuleExitStatus 'Error'}
      Default    {VMR_ProcessingModuleComplete -ModuleExitStatus 'Null'
                  Write-Host "The script module was unable to trap exit code for $VMRScriptFile."}}
 #<<< End of script work >>>
+
+
+
+<#
+Virtual Machine Runner  -  Copyright (C) 2016-2017  -  Riley Lim
+
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU
+General Public License as published by the Free Software Foundation, either version 3 of the 
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with this program.  If not, 
+see <http://www.gnu.org/licenses/>.
+#>

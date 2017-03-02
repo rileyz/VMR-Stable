@@ -31,7 +31,7 @@ If ($VM_OptimiseIOPerformance -eq $true)
          Write-Verbose 'Disk I/O performance optimisations have been applied.'}
 
 If ($VM_EmptyDVDDrive -eq $true)
-        {Write-Output '  Ensuring first avaliable virtual DVD drive is empty.'
+        {Write-Output '  Ensuring first available virtual DVD drive is empty.'
          Write-Output '   If more than one DVD drive is available, it will not be checked.'
          [System.Collections.ArrayList]$VMXFileInMemory = UpdateVMX -VMX $VMXFileInMemory -ConfigurationItem 'sata0:1.deviceType' -Value 'cdrom-raw'
          [System.Collections.ArrayList]$VMXFileInMemory = UpdateVMX -VMX $VMXFileInMemory -ConfigurationItem 'sata0:1.fileName' -Value 'auto detect'
@@ -44,3 +44,20 @@ $VMXFileInMemory | Set-Content $VM
 
 Write-Verbose 'VMware optimisations applied.'
 #<<< End of Configuration Base for VMware Optimisation >>>
+
+
+
+<#
+Virtual Machine Runner  -  Copyright (C) 2016-2017  -  Riley Lim
+
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU
+General Public License as published by the Free Software Foundation, either version 3 of the 
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with this program.  If not, 
+see <http://www.gnu.org/licenses/>.
+#>
