@@ -16,8 +16,7 @@ Function Get-FileName($InitialDirectory) {
     $OpenFileDialog.initialDirectory = $InitialDirectory
     $OpenFileDialog.filter = "VMware configuration files (*.vmx)|*.vmx|All files|*.*"
     $null = $OpenFileDialog.ShowDialog()
-    Write-Debug 'File input string is:'
-    Write-Debug $OpenFileDialog.filename
+    Write-Debug "File input string is: $($OpenFileDialog.filename)"
 
     Write-Verbose "Checking file selction variable is not null."
     If ([String]::IsNullOrEmpty($OpenFileDialog.filename) -eq $true)
@@ -43,15 +42,16 @@ Function Get-FileName($InitialDirectory) {
                        Else{Write-Warning 'Virtual machine path is not valid.' ; Break}
                    Write-Debug 'Returning VMX file path from function.'
                    $OpenFileDialog.filename} 
-         'CSV'    {Get-Content $OpenFileDialog.filename| Where {$_.trim() -ne ""} | ForEach-Object {Write-Debug 'Stripping quotes, carriage returns, line feeds and showing result:'
+         'CSV'    {Get-Content $OpenFileDialog.filename| Where {$_.trim() -ne ""} | ForEach-Object {Write-Debug 'Stripping quotes, carriage returns, and line feeds.'
                                                                                                     $_ = $_ -replace '"|`n|`r'
 
-                                                                                                    Write-Debug (Test-Path $_)
-                                                                                                    If (Test-Path $_) {$VerifyVMX = Get-Content $_ -ErrorAction SilentlyContinue
+                                                                                                    If (Test-Path $_) {Write-Debug 'Virtual machine path is valid.'
+                                                                                                                       $VerifyVMX = Get-Content $_ -ErrorAction SilentlyContinue
                                                                                                                                       If ($VerifyVMX -match '.vmdk' -and ($VerifyVMX -match 'displayName') -and ($VerifyVMX -match 'nvram'))
                                                                                                                                               {$TestResult = 'Valid'}
                                                                                                                                           Else{$TestResult = 'Invalid VMX...'}}
-                                                                                                                                 Else{$TestResult = 'Invalid Path..'}
+                                                                                                                  Else{Write-Debug 'Virtual machine path is not valid.'
+                                                                                                                       $TestResult = 'Invalid Path..'}
                                                                                                     $CheckCSVPaths.Add("$_", "$TestResult")}
 
                    If ($CheckCSVPaths.Values -contains 'Invalid Path..' -or ($CheckCSVPaths.Values -contains 'Invalid VMX...') -eq $true)
@@ -762,7 +762,7 @@ Function VMR_RunModule{
         $ArrayRecord = "*$ArrayRecord*" -replace "`n|`r|# "
          
         If (($VM_OperatingSystem -replace "`n|`r") -like $ArrayRecord)
-                {Write-Debug "Array match to $VM_OperatingSystem, use `$Counter value for array referance."
+                {Write-Debug "Array match to $VM_OperatingSystem, use `$Counter value for array reference."
                  $Match = $true ; Break}
          
         $Counter ++}
@@ -925,6 +925,17 @@ Function Test-RegistryValue {
  
  } #End Function Test-RegistryValue
 
+Function UpdateVMX{
+    Param ([System.Collections.ArrayList]$VMX,
+           [String] $ConfigurationItem,
+           [String] $Value)
+
+    If (($Element = (0..($VMX.Count-1)) | where {$VMX[$_] -like "*$ConfigurationItem*"}) -ne $null)
+            {$VMX[$Element] = "$ConfigurationItem = `"$Value`""}
+        Else{$VMX += "$ConfigurationItem = `"$Value`""}
+    Return $VMX
+ } #End Function VMwareUpdateVMX
+
 Function VMWareCleanUpDisksViaGUI{
     Param ([Parameter(Mandatory=$true)][String]$VM,
            [Parameter(Mandatory=$true)][Int]$CheckForIdleInSeconds,
@@ -1014,8 +1025,6 @@ namespace PInvoke.Win32 {
 
 	$VMXFileInMemory = Get-Content $VM
 
-	Write-Output 'Recovering disks space via VMware Workstation Clean Up Disks.'
-
     $RegEx = [RegEx]'displayName = ".*?"'
 	$WorkingDisplayName = Select-String -Pattern $RegEx -InputObject $VMXFileInMemory -AllMatches | foreach {$_.matches}
 	$DisplayName = $WorkingDisplayName.Value -replace 'displayName = "|"'
@@ -1032,7 +1041,9 @@ namespace PInvoke.Win32 {
     $IsComputerIdle = CheckForIdleUserSession -IdleSeconds $CheckForIdleInSeconds -MaxMinutes $MaxWaitingMinutes
 
     If ($IsComputerIdle -eq $true)
-            {Write-Output ' Disk cleanup has started, do not use the computer until the task is complete.'
+            {$PreCleanUpSize = [Math]::Round(((Get-ChildItem -path (Get-ChildItem $VM).DirectoryName -recurse | Measure-Object -property length -sum ).sum /1MB))
+             
+             Write-Output ' Disk cleanup has started, do not use the computer until the task is complete.'
              Write-Verbose 'Changing Window focus and sending key press for Disk Clean Up.'
              [Microsoft.VisualBasic.Interaction]::AppActivate("$VMwareWorkstation")
 	         [System.Windows.Forms.SendKeys]::SendWait("%MME")
@@ -1054,7 +1065,12 @@ namespace PInvoke.Win32 {
              $null = CheckForIdleUserSession -IdleSeconds $CheckForIdleInSeconds
 	         Write-Verbose 'Changing Window focus and sending key press to close dialogue.'
 	         [Microsoft.VisualBasic.Interaction]::AppActivate('VMware Workstation')
-	         [System.Windows.Forms.SendKeys]::SendWait("{ENTER}")}
+	         [System.Windows.Forms.SendKeys]::SendWait("{ENTER}")
+
+             $PostCleanUpSize = [Math]::Round(((Get-ChildItem -path (Get-ChildItem $VM).DirectoryName -recurse | Measure-Object -property length -sum ).sum /1MB))
+             If ($PostCleanUpSize -lt $PreCleanUpSize) 
+                     {Write-Verbose 'Recovered disk space successfully.'}
+                 Else{Write-Warning 'Recovery of disk space was not successful, please perform this action manually.'}}
         Else{Write-Warning 'Waiting for idle computer reached the maximum waiting threshold, skipping task.'}
 
  } #End Function CheckforVMFileLocks
@@ -1062,7 +1078,8 @@ namespace PInvoke.Win32 {
 Function VMWarePowerControl{
     Param ([Switch] $SoftRestart,
            [Switch] $SoftStop,
-           [Switch] $Start)
+           [Switch] $Start,
+           [String] $Headless)
 
     If ($SoftRestart -eq $true)
             {Write-Output ' ⚡Restarting the virtual machine.'
@@ -1083,7 +1100,11 @@ Function VMWarePowerControl{
 
     If ($Start -eq $true)
             {Write-Output ' ⚡Starting the virtual machine.'
-             &.\vmrun -T ws start $VM
+             Write-Debug "`$Headless: $Headless"
+             If ($Headless -eq $true)
+                     {&.\vmrun -T ws start $VM nogui}
+                 Else{&.\vmrun -T ws start $VM gui}
+
              VMwareVMRunResult
              Write-Verbose 'Waiting for the virtual machine to be ready before proceeding.'
              $null = &.\vmrun -T ws -gu $GuestUserName -gp $GuestPassword listProcessesInGuest $VM
@@ -1098,15 +1119,41 @@ Function VMWarePowerControl{
 Function VMWareSnapshotControl{
     Param ([Switch] $TakeSnapshot,
            [Switch] $RevertSnapshot,
+           [Switch] $DeleteSnapshotAndChildrenAfter,
            [String] $SnapshotName)
 
     If ($TakeSnapshot -eq $true)
             {Write-Output " 📸Snapshot control, taking snapshot `'$SnapshotName`'."
+             
+             #Adding description to virtual machine annotation field, this is not the Snapshot description field.
+             [System.Collections.ArrayList]$VMXFileInMemory = Get-Content "$VM"
+             [System.Collections.ArrayList]$VMXFileInMemory = UpdateVMX -VMX $VMXFileInMemory -ConfigurationItem 'annotation' -Value "$SnapshotName"
+             
+             $WriteCheck = New-Object System.IO.FileInfo "$VM"
+             Do {Try   {[IO.File]::OpenWrite($WriteCheck).Close()
+                        Write-Debug 'VM file not locked.'
+                        $VMXFileInMemory | Set-Content $VM -ErrorAction Stop
+                        $FileNotLocked = $True}
+                 Catch {$FileNotLocked = $False
+                        Start-Sleep -Seconds 1
+                        Write-Debug 'VM file locked.'}}
+             Until ($FileNotLocked)
+
              &.\vmrun -T ws snapshot $VM $SnapshotName
              If ($LASTEXITCODE -eq 0)
                      {VMwareVMRunResult}
                  Else{Break}}
 
+    IF ($DeleteSnapshotAndChildrenAfter -eq $true)
+            {$DeletionSnapshotRoot = &.\vmrun -T ws -gu $GuestUserName -gp $GuestPassword listSnapshots $VM 
+             $DeletionSnapshotRoot = $DeletionSnapshotRoot[$DeletionSnapshotRoot.IndexOf("$SnapshotName") + 1]
+             If ($DeletionSnapshotRoot -ne $null)
+                     {Write-Output ' 📸Snapshot control, deleting sub snapshot and children.'
+                      &.\vmrun -T ws deleteSnapshot $VM $DeletionSnapshotRoot andDeleteChildren
+                      VMwareVMRunResult}
+                 Else{}
+             }
+    
     If ($RevertSnapshot -eq $true)
             {Write-Output " 📸Snapshot control, reverting to snapshot `'$SnapshotName`'."
              &.\vmrun -T ws revertToSnapshot $VM $SnapshotName

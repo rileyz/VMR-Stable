@@ -16,7 +16,7 @@ Write-Output 'Disable Windows Defender.'
 VMR_RunModule -Module Framework\Module_Windows-WindowsDefender-GlobalDisable.ps1
 
 #Removing Modern Apps from Administrator.
-Write-Output 'Removing Modern Apps from  Administrator.'
+Write-Output 'Removing Modern Apps from Administrator.'
 VMR_RunModule -Module Framework\Module_DesktopExperience-RemoveAppXPackages.ps1
 #<<< End of Shared Sequencer Configuration Windows 8 Build >>>
 

@@ -1,6 +1,6 @@
 ﻿<#
 .SYNOPSIS
-    Remove mordern applications via a predefined CSV for the invoker of the script.
+    Installs the Application Virtualization (App-V) sequencer.
  
 .LINK
 Author:.......http://www.linkedin.com/in/rileylim
@@ -10,18 +10,18 @@ Author:.......http://www.linkedin.com/in/rileylim
 
 # Script Support ##################################################################################
 # Operating System, 32-bit Support, 64-bit Support
-# Windows 10,Unproven,Unproven
-# Windows 8.1,yes,yes
-# Windows 8,yes,yes
-# Windows 7,Unproven,Unproven
-# Server 2016,NA,Unproven
-# Server 2012 R2,NA,Unproven
-# Server 2012,NA,Unproven
-# Server 2008 R2,NA,Unproven
+# Windows 10,Yes,Yes
+# Windows 8.1,Yes,Yes
+# Windows 8,Yes,Yes
+# Windows 7,Yes,Yes
+# Server 2016,NA,No
+# Server 2012 R2,NA,Yes
+# Server 2012,NA,Yes
+# Server 2008 R2,NA,Yes
 #<<< End of Script Support >>>
 
 # Script Assets ###################################################################################
-# Asset: WindowsApp.csv
+# Asset: AppV5.1RTM_Sequencer_KB4041137.exe
 #<<< End of Script Assets >>>
 
 
@@ -41,19 +41,24 @@ VMR_ReadyMessagingEnvironment
 # Start of script work ############################################################################
 $ArrayScriptExitResult = @()
 
-$DataCVS = "$VMRCollateral\WindowsApp.csv"
+$ServiceName = 'UI0Detect'
+$QueryString = "Select StartMode From Win32_Service Where Name='" + $ServiceName + "'"
+$Service = Get-WmiObject -Query $QueryString
 
-$WindowsAppArray = (Import-Csv $DataCVS -Header WindowsApp)[1..($DataCVS.length - 1)]
+If ($Service.StartMode -ne $null)
+    {Write-Verbose 'Service $ServiceName present, stopping and disabling service.'
+     Stop-Service -Name $ServiceName
+     Set-Service -Name $ServiceName -StartupType Disabled}
+Else{Write-Verbose 'Service $ServiceName not present.'}
 
-ForEach ($_ in $WindowsAppArray)
-        {Write-Debug "Processing $($_.WindowsApp)"
-         $AppX = Get-AppxPackage -Name $_.WindowsApp
+$Process = Start-Process -FilePath $VMRCollateral\AppV5.1RTM_Sequencer_KB4041137.exe -ArgumentList '/q /AcceptEULA /CEIPOPTIN=0 /NoRestart' -Wait -PassThru
 
-         If ($AppX -ne $null)
-                 {Remove-AppxPackage -Package $AppX.PackageFullName
-                  $ArrayScriptExitResult += $?
-                  Write-Debug 'AppX package removed!'}
-             Else{Write-Debug 'Appx package was not found on this machine.'}}
+If ($Service.StartMode -ne $null)
+    {Write-Verbose 'Service $ServiceName present, setting Startup Type to Manual.'
+     Set-Service -Name $ServiceName -StartupType Manual}
+Else{Write-Verbose 'Service $ServiceName not present.'}
+
+$ArrayScriptExitResult += $Process.ExitCode
 
 $SuccessCodes = @('Example','0','3010','True')                                                    #List all success codes, including reboots here.
 $SuccessButNeedsRebootCodes = @('Example','3010')                                                 #List success but needs reboot code here.
@@ -80,7 +85,7 @@ Switch ($ScriptExitResult)
 
 
 <#
-Virtual Machine Runner  Copyright (C) 2016-2017   Riley Lim
+Virtual Machine Runner  -  Copyright (C) 2018  -  Riley Lim
 
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU
 General Public License as published by the Free Software Foundation, either version 3 of the 

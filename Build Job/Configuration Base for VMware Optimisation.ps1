@@ -1,18 +1,9 @@
 ﻿# Start Configuration Base for VMware Optimisation ################################################
-Function UpdateVMX{
-    Param ([System.Collections.ArrayList]$VMX,
-           [String] $ConfigurationItem,
-           [String] $Value)
-
-    If (($Element = (0..($VMX.Count-1)) | where {$VMX[$_] -like "*$ConfigurationItem*"}) -ne $null)
-            {$VMX[$Element] = "$ConfigurationItem = `"$Value`""}
-        Else{$VMX += "$ConfigurationItem = `"$Value`""}
-    Return $VMX
- } #End Function VMwareUpdateVMX
-
 Write-Output 'Applying VMware optimisations.'
 Write-Verbose '  Loading VMware virtual machine configuration file into memory.'
 [System.Collections.ArrayList]$VMXFileInMemory = Get-Content "$VM"
+
+#UpdateVMX is dot sourced from Start Virtual Machine Runner Buildout.ps1.
 
 If ($VM_DisableScreenScaling -eq $true)
         {Write-Output '  Disabling screen scaling via .vmx configuration file.'
@@ -31,11 +22,13 @@ If ($VM_OptimiseIOPerformance -eq $true)
          Write-Verbose 'Disk I/O performance optimisations have been applied.'}
 
 If ($VM_EmptyDVDDrive -eq $true)
-        {Write-Output '  Ensuring first available virtual DVD drive is empty.'
-         Write-Output '   If more than one DVD drive is available, it will not be checked.'
-         [System.Collections.ArrayList]$VMXFileInMemory = UpdateVMX -VMX $VMXFileInMemory -ConfigurationItem 'sata0:1.deviceType' -Value 'cdrom-raw'
-         [System.Collections.ArrayList]$VMXFileInMemory = UpdateVMX -VMX $VMXFileInMemory -ConfigurationItem 'sata0:1.fileName' -Value 'auto detect'
-         [System.Collections.ArrayList]$VMXFileInMemory = UpdateVMX -VMX $VMXFileInMemory -ConfigurationItem 'sata0:1.startConnected' -Value 'FALSE'}
+        {$VM_EmptyDVDDriveArray = @()
+         $DVDRomArray = $VMXFileInMemory | ForEach-Object {If ($_ -match 'cdrom-raw') {[RegEx]::match($_,'.*\d:\d').Value}}
+         $DVDRomArray += $VMXFileInMemory | ForEach-Object {If ($_ -match 'cdrom-image') {[RegEx]::match($_,'.*\d:\d').Value}}
+         $DVDRomArray | ForEach-Object{[System.Collections.ArrayList]$VMXFileInMemory = UpdateVMX -VMX $VMXFileInMemory -ConfigurationItem "$_.autodetect" -Value 'TRUE'
+                                       [System.Collections.ArrayList]$VMXFileInMemory = UpdateVMX -VMX $VMXFileInMemory -ConfigurationItem "$_.deviceType" -Value 'cdrom-raw'
+                                       [System.Collections.ArrayList]$VMXFileInMemory = UpdateVMX -VMX $VMXFileInMemory -ConfigurationItem "$_.fileName" -Value 'auto detect'
+                                       [System.Collections.ArrayList]$VMXFileInMemory = UpdateVMX -VMX $VMXFileInMemory -ConfigurationItem "$_.startConnected" -Value 'FALSE'}}
 
 Start-Sleep -Seconds 1
 

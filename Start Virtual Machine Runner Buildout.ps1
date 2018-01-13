@@ -57,53 +57,61 @@ $PostBootWaitInterval     = '30'
 $ForceRunUnprovenScripts  = $false
 
 #User modifiable Virtual Machine Runner variables.
-$VM_CleanUpDisks          = $true              #Note: Will preform VMware Workstation Clean up Disks.
+$VM_CleanUpDisks          = $true              #Note: Will invoke virtual machine and preform VMware Workstation Clean up Disks.
 $VM_DisableScreenScaling  = $true              #Note: Disables VMware Display Scaling to virtual machine.
 $VM_EmptyDVDDrive         = $true              #Note: Ejects media from virtual machine DVD drive.
+$VM_HeadlessMode          = $true              #Note: Build machine in background with no GUI.
 $VM_OptimiseIOPerformance = $true
 
 
-$MimicHomeDrives    = 'H:Home'                 #None|H:Home
-$MimicCommonDrives  = 'I:IT Dept,S:Shared'     #None|F:Finance Dept|I:IT Dept,S:Shared
+$MimicHomeDrives     = 'H:Home'                 #None|H:Home
+$MimicCommonDrives   = 'I:IT Dept,S:Shared'     #None|F:Finance Dept|I:IT Dept,S:Shared
 
-$OfficeVersion      = 'Office2016_32'          #DoNotInstall|Office2013_32|Office2013_64|Office2016_32|Office2016_64
+$OfficeVersion       = 'Office2016_32'          #DoNotInstall|Office2013_32|Office2013_64|Office2016_32|Office2016_64
 
-$Repackager         = $true
+$Repackager          = $true
 
-$AppVSeq5           = $true
-$AppVClient5        = $true
-$AppVClient5HF1     = $true
+$AppVSeq5            = $true
+$AppVClient5         = $true
+$AppVClient5HF1      = $true
 
-$AppVSeq5SP1        = $true
-$AppVClient5SP1     = $true
-$AppVClient5SP1HF3  = $true
+$AppVSeq5SP1         = $true
+$AppVClient5SP1      = $true
+$AppVClient5SP1HF3   = $true
 
-$AppVSeq5SP2        = $true
-$AppVClient5SP2     = $true
-$AppVClient5SP2HF2  = $true
+$AppVSeq5SP2         = $true
+$AppVClient5SP2      = $true
+$AppVClient5SP2HF2   = $true
 
-$AppVSeq5SP2HF4     = $true
-$AppVClient5SP2HF4  = $true
-$AppVClient5SP2HF5  = $true
+$AppVSeq5SP2HF4      = $true
+$AppVClient5SP2HF4   = $true
+$AppVClient5SP2HF5   = $true
 
-$AppVSeq5SP3        = $true
-$AppVClient5SP3     = $true
-$AppVClient5SP3HF1  = $true
-$AppVClient5SP3HF2  = $true
-$AppVClient5SP3HF3  = $true
+$AppVSeq5SP3         = $true
+$AppVClient5SP3      = $true
+$AppVClient5SP3HF1   = $true
+$AppVClient5SP3HF2   = $true
+$AppVClient5SP3HF3   = $true
 
-$AppVSeq51          = $true
-$AppVClient51       = $true
-$AppVClient51HF1    = $true
-$AppVClient51HF2    = $true
-$AppVClient51HF3    = $true
-$AppVClient51HF4    = $true
-$AppVClient51HF5    = $true
-$AppVClient51HF6    = $true
-$AppVClient51HF7    = $true
+$AppVSeq51           = $true
+$AppVClient51        = $true
+$AppVClient51HF1     = $true
+$AppVClient51HF2     = $true
+$AppVClient51HF3     = $true
+$AppVClient51HF4     = $true
+$AppVClient51HF5     = $true
+$AppVClient51HF6     = $true
+$AppVClient51HF7     = $true
 
-$AppVInBoxClient    = $true                    #Note: App-V Client is now part of the operating system.
-$AppVADKSequencer   = $true                    #Note: Sequencer via the Windows Assessment and Deployment Kit.
+$AppVSeq51HF8        = $true
+$AppVClient51HF8     = $true
+$AppVClient51HF9     = $true
+
+$AppVSeq51HF10       = $true
+$AppVClient51HF10    = $true
+
+$AppVInBoxClient     = $true                    #Note: App-V Client is now part of the operating system.
+$AppVADKSequencer    = $true                    #Note: Sequencer via the Windows Assessment and Deployment Kit.
 
 Write-Verbose 'Variables prepared.'
 #<<< End of Setting up housekeeping for variables >>>
